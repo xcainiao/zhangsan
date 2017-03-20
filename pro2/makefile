@@ -1,0 +1,84 @@
+target: procos.img
+
+
+CC	= gcc
+CXX	= c++
+AS	= as
+AR	= ar
+LD	= ld
+
+OBJCOPY = objcopy
+OBJDUMP = objdump
+ 
+QUME = qemu-system-i386
+
+CFLAGS	:= $(CFLAGS) $(DEFS) $(LABDEFS) -Os -ffreestanding -fomit-frame-pointer -Ikernel/def/ -Ikernel/init/ -Ikernel/lib/ -Ikernel/x86/ -MD -Wall -Wno-format -Wno-unused -Werror -ggdb -nostdinc 
+# Include -fno-stack-protector if the option exists.
+CFLAGS	+= $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
+# Include -m32 if the option exists (x86_64).
+CFLAGS	+= $(shell $(CC) -m32 -E -x c /dev/null >/dev/null 2>&1 && echo -m32)
+
+LDFLAGS := $(LDFLAGS)
+# Link for 32-bit targets if on x86_64.
+LDFLAGS += $(shell $(LD) -m elf_i386 --help >/dev/null 2>&1 && echo -m elf_i386)
+
+compile = $(CC) $(CFLAGS)  $(1)
+link = $(LD) $(LDFLAGS) $(1)
+
+HOSTCC = gcc
+
+
+OBJDIR  = obj
+KERNEL = kernel
+
+
+BOOT_OBJS = $(OBJDIR)/bootstart.o $(OBJDIR)/boot.o
+
+KERNEL_LINKER_FILES = $(KERNEL)/link/shared.ld
+KERNEL_OBJS = $(OBJDIR)/k-int.o $(OBJDIR)/kernel.o \
+			  $(OBJDIR)/x86.o \
+			  $(OBJDIR)/lib.o
+
+#kernel ----------------------------------------------------------
+$(OBJDIR)/lib.o: $(KERNEL)/lib/lib.c 
+	$(call compile, -c $< -o $@)
+
+$(OBJDIR)/x86.o: $(KERNEL)/x86/x86.c 
+	$(call compile, -c $< -o $@)
+
+$(OBJDIR)/kernel.o: $(KERNEL)/init/kernel.c 
+	$(call compile, -c $< -o $@)
+
+$(OBJDIR)/k-int.o: $(KERNEL)/init/k-int.S 
+	$(call compile, -c $< -o $@)
+
+
+$(OBJDIR)/kernel: $(KERNEL_OBJS) $(KERNEL_LINKER_FILES)
+	$(call link,-e multiboot_start -Ttext 0x100000 -o $@ $(KERNEL_OBJS) $(KERNEL_LINKER_FILES))
+
+
+
+#bootload ----------------------------------------------------------
+$(OBJDIR)/bootsector: $(BOOT_OBJS)
+	$(call link,-N -e start -Ttext 0x7C00 -o $@.out $^,LINK)
+	$(OBJCOPY) -S -O binary -j .text $@.out $@
+
+$(OBJDIR)/boot.o:  boot/boot.c
+	mkdir -p $(@D)
+	$(call compile,-nostdinc -c $< -o $@)
+
+$(OBJDIR)/bootstart.o: boot/bootstart.S
+	$(call compile,-DWEENSYOS_KERNEL -nostdinc -c $< -o $@)
+
+$(OBJDIR)/mkbootdisk: build/mkbootdisk.c
+	mkdir -p $(@D)
+	$(HOSTCC) -I. -o $(OBJDIR)/mkbootdisk build/mkbootdisk.c
+
+procos.img: $(OBJDIR)/mkbootdisk $(OBJDIR)/bootsector $(OBJDIR)/kernel
+	$(OBJDIR)/mkbootdisk $(OBJDIR)/bootsector $(OBJDIR)/kernel > $@
+
+run: procos.img
+	$(QUME) -drive file=procos.img,index=0,media=disk,format=raw
+
+clean:
+	rm -rf $(OBJDIR) *.img *.core
