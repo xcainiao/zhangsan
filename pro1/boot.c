@@ -47,56 +47,30 @@
 #define PAGESIZE	4096
 #define ELFHDR		((struct Elf *) 0x10000) // scratch space
 
-#define LPTPORT         0x378
-
 void readsect(void *addr, uint32_t sect);
 void readseg(uint32_t va, uint32_t filesz, uint32_t memsz, uint32_t sect);
-
-static void delay(void) 
-{
-     inb(0x84);
-     inb(0x84);
-     inb(0x84);
-     inb(0x84);
- } 
-
-static void lpt_putc_sub(int c)
-{
-     int i;
-     for (i = 0; !(inb(LPTPORT + 1) & 0x80) && i < 12800; i ++) {
-         delay();
-     }
-     outb(LPTPORT + 0, c); 
-     outb(LPTPORT + 2, 0x08 | 0x04 | 0x01);
-     outb(LPTPORT + 2, 0x08);
-}
-
-
-static void lpt_putc(int c) 
-{
-     if (c != '\b') 
-     {
-         lpt_putc_sub(c);
-     }   
-     else {
-         lpt_putc_sub('\b');
-         lpt_putc_sub(' ');
-         lpt_putc_sub('\b');
-     }   
- }
-
-
-void cons_putc(int c) 
-{
-    lpt_putc(c);
-    //cga_putc(c);
-    //serial_putc(c);
-}
 
 void
 bootmain(void)
 {
-    cons_putc('a');
+	struct Proghdr *ph, *eph;
+	uint32_t *stackptr;
+
+	// read 1st page off disk
+	readseg((uint32_t) ELFHDR, PAGESIZE, PAGESIZE, 1);
+
+	// is this a valid ELF?
+	if (ELFHDR->e_magic != ELF_MAGIC)
+		return;
+
+	// load each program segment (ignores ph flags)
+	ph = (struct Proghdr*) ((uint8_t *) ELFHDR + ELFHDR->e_phoff);
+	eph = ph + ELFHDR->e_phnum;
+	for (; ph < eph; ph++)
+		readseg(ph->p_va, ph->p_filesz, ph->p_memsz, 1 + ph->p_offset / SECTORSIZE);
+
+	// jump to the kernel, clearing %eax
+	__asm __volatile("movl %0, %%esp; ret" : : "r" (&ELFHDR->e_entry), "a" (0));
 }
 
 // Read 'filesz' bytes at 'offset' from kernel into virtual address 'va',
