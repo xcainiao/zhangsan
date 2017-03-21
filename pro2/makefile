@@ -35,8 +35,6 @@ KERNEL = kernel
 BOOT_OBJS = $(OBJDIR)/bootstart.o $(OBJDIR)/boot.o
 
 KERNEL_OBJS = $(OBJDIR)/kernel.o \
-			  $(OBJDIR)/x86.o \
-			  $(OBJDIR)/lib.o \
 			  $(OBJDIR)/stdio.o
 
 #kernel ----------------------------------------------------------
