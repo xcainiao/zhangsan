@@ -34,10 +34,10 @@ KERNEL = kernel
 
 BOOT_OBJS = $(OBJDIR)/bootstart.o $(OBJDIR)/boot.o
 
-KERNEL_LINKER_FILES = $(KERNEL)/link/shared.ld
-KERNEL_OBJS = $(OBJDIR)/k-int.o $(OBJDIR)/kernel.o \
+KERNEL_OBJS = $(OBJDIR)/kernel.o \
 			  $(OBJDIR)/x86.o \
-			  $(OBJDIR)/lib.o
+			  $(OBJDIR)/lib.o \
+			  $(OBJDIR)/stdio.o
 
 #kernel ----------------------------------------------------------
 $(OBJDIR)/lib.o: $(KERNEL)/lib/lib.c 
@@ -49,13 +49,12 @@ $(OBJDIR)/x86.o: $(KERNEL)/x86/x86.c
 $(OBJDIR)/kernel.o: $(KERNEL)/init/kernel.c 
 	$(call compile, -c $< -o $@)
 
-$(OBJDIR)/k-int.o: $(KERNEL)/init/k-int.S 
+$(OBJDIR)/stdio.o: $(KERNEL)/lib/stdio.c 
 	$(call compile, -c $< -o $@)
 
 
 $(OBJDIR)/kernel: $(KERNEL_OBJS) $(KERNEL_LINKER_FILES)
-	$(call link,-e multiboot_start -Ttext 0x100000 -o $@ $(KERNEL_OBJS) $(KERNEL_LINKER_FILES))
-
+	$(call link,-e start -Ttext 0x100000 -o $@ $(KERNEL_OBJS) )
 
 
 #bootload ----------------------------------------------------------
@@ -78,7 +77,9 @@ procos.img: $(OBJDIR)/mkbootdisk $(OBJDIR)/bootsector $(OBJDIR)/kernel
 	$(OBJDIR)/mkbootdisk $(OBJDIR)/bootsector $(OBJDIR)/kernel > $@
 
 run: procos.img
-	$(QUME) -drive file=procos.img,index=0,media=disk,format=raw
+	$(QUME) -parallel stdio -drive file=procos.img,index=0,media=disk,format=raw
 
+run-gdb: procos.img
+	$(QUME) -net none -parallel file:log.txt -k en-us  -S -gdb tcp::20000 -drive file=procos.img,index=0,media=disk,format=raw 
 clean:
 	rm -rf $(OBJDIR) *.img *.core

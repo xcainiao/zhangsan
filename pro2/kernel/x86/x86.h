@@ -195,7 +195,8 @@ insl(int port, void *addr, int cnt)
 static inline void
 outb(int port, uint8_t data)
 {
-	asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
+	//asm volatile ("outb %0, %1" :: "a" (data), "d" (port));
+    asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
 
 static inline void

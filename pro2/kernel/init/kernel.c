@@ -1,13 +1,19 @@
-#include "kernel.h"
-#include "x86.h"
-#include "lib.h"
+#include "stdio.h"
 
 void start(void)
 {
-	console_clear();
-
-	cursorpos = console_printf(cursorpos, 0x0700, "hello world");
-    
+    putc('h');	
+    putc('e');	
+    putc('l');	
+    putc('l');	
+    putc('o');	
+    putc(' ');	
+    putc('w');	
+    putc('o');	
+    putc('r');	
+    putc('l');	
+    putc('d');	
+    putc('\n');	
     while(1);
 }
 
