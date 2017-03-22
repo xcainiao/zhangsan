@@ -19,3 +19,11 @@ void putc(int c)
     outb(LPTPORT + 2, 0x08 | 0x04 | 0x01);
     outb(LPTPORT + 2, 0x08);
 }
+void puts(char *s)
+{
+    while(*s)
+    {
+        putc(*s);
+        *(s++);
+    }
+}

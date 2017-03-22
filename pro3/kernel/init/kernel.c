@@ -9,6 +9,7 @@ void start(void)
     idt_init();
     clock_init();
     intr_enable();
+    puts("aaaaa\n");
     while(1);
 }
 
