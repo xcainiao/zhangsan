@@ -2,6 +2,7 @@
 #include "trap.h"
 #include "x86.h"
 #include "stdio.h"
+#include "clock.h"
 
 #define TICK_NUM 100
 
@@ -54,7 +55,12 @@ static void trap_dispatch(struct trapframe *tf)
     switch (tf->tf_trapno) 
     {
         case IRQ_OFFSET + IRQ_TIMER:
-            putc('a');
+            ticks ++;
+            if (ticks % 100 == 0)
+            {
+                putc('a');
+                ticks = 0;
+            }
             break;
         default:
             putc('.');

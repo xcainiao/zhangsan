@@ -25,11 +25,16 @@ static inline uint8_t inb(int port)
 	return data;
 }
 
-
+static inline void outb(int port, uint8_t data) 
+{
+    asm volatile ("outb %0, %w1" :: "a" (data), "d" (port));
+}
+/*
 static inline void outb(int port, uint8_t data)
 {
     asm volatile("outb %0,%w1" : : "a" (data), "d" (port));
 }
+*/
 
 static inline void lidt(struct pseudodesc *pd) 
 {

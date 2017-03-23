@@ -60,12 +60,23 @@
     (gate).gd_off_31_16 = (uint32_t)(off) >> 16;        \
 }
 
+struct gatedesc {
+    unsigned gd_off_15_0 : 16;        // low 16 bits of offset in segment
+    unsigned gd_ss : 16;            // segment selector
+    unsigned gd_args : 5;            // # args, 0 for interrupt/trap gates
+    unsigned gd_rsv1 : 3;            // reserved(should be zero I guess)
+    unsigned gd_type : 4;            // type(STS_{TG,IG32,TG32})
+    unsigned gd_s : 1;                // must be 0 (system)
+    unsigned gd_dpl : 2;            // descriptor(meaning new) privilege level
+    unsigned gd_p : 1;                // Present
+    unsigned gd_off_31_16 : 16;        // high bits of offset in segment
+};
 
-struct pushregs{
+struct pushregs {
     uint32_t reg_edi;
     uint32_t reg_esi;
     uint32_t reg_ebp;
-    uint32_t reg_oesp;            
+    uint32_t reg_oesp;            /* Useless */
     uint32_t reg_ebx;
     uint32_t reg_edx;
     uint32_t reg_ecx;
@@ -93,19 +104,7 @@ struct trapframe {
     uint16_t tf_padding5;
 } __attribute__((packed));
 
-struct gatedesc {
-    unsigned gd_off_15_0 : 16;        // low 16 bits of offset in segment
-    unsigned gd_ss : 16;            // segment selector
-    unsigned gd_args : 5;            // # args, 0 for interrupt/trap gates
-    unsigned gd_rsv1 : 3;            // reserved(should be zero I guess)
-    unsigned gd_type : 4;            // type(STS_{TG,IG32,TG32})
-    unsigned gd_s : 1;                // must be 0 (system)
-    unsigned gd_dpl : 2;            // descriptor(meaning new) privilege level
-    unsigned gd_p : 1;                // Present
-    unsigned gd_off_31_16 : 16;        // high bits of offset in segment
-};
+
 
 void idt_init(void);
-void print_trapframe(struct trapframe *tf);
-void print_regs(struct pushregs *regs);
-bool trap_in_kernel(struct trapframe *tf);
+void trap(struct trapframe *tf);

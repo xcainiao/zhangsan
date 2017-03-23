@@ -22,7 +22,7 @@
 #define TIMER_RATEGEN   0x04                    // mode 2, rate generator
 #define TIMER_16BIT     0x30                    // r/w counter 16 bits, LSB first
 
-size_t ticks;
+volatile size_t ticks;
 
 /* *
  * clock_init - initialize 8253 clock to interrupt 100 times per second,

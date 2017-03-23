@@ -12,7 +12,7 @@ OBJDUMP = objdump
  
 QUME = qemu-system-i386
 
-CFLAGS	:= $(CFLAGS) $(DEFS) $(LABDEFS) -Os -ffreestanding -fomit-frame-pointer -Ikernel/def/ -Ikernel/init/ -Ikernel/lib/ -Ikernel/x86/ -Ikernel/trap/ -Ikernel/driver/ -MD -Wall -Wno-format -Wno-unused -Werror -ggdb -nostdinc 
+CFLAGS	:= -O1 -ffreestanding -fomit-frame-pointer -Ikernel/def/ -Ikernel/init/ -Ikernel/libs/ -Ikernel/x86/ -Ikernel/trap/ -Ikernel/driver/ -MD -Wall -Wno-format -Wno-unused -Werror -ggdb -nostdinc 
 # Include -fno-stack-protector if the option exists.
 CFLAGS	+= $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 # Include -m32 if the option exists (x86_64).
@@ -51,7 +51,7 @@ $(OBJDIR)/x86.o: $(KERNEL)/x86/x86.c
 $(OBJDIR)/kernel.o: $(KERNEL)/init/kernel.c 
 	$(call compile, -c $< -o $@)
 
-$(OBJDIR)/stdio.o: $(KERNEL)/lib/stdio.c 
+$(OBJDIR)/stdio.o: $(KERNEL)/libs/stdio.c 
 	$(call compile, -c $< -o $@)
 
 $(OBJDIR)/picirq.o: $(KERNEL)/driver/picirq.c 
